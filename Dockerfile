@@ -7,6 +7,9 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl
+    
+RUN pecl install redis \
+    && docker-php-ext-enable redis
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
