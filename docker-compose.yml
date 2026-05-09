@@ -8,17 +8,22 @@ services:
     volumes:
       - ./:/var/www
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
 
   webserver:
     image: nginx:latest
     ports:
-      - ":80"
+      - "80"
     volumes:
       - ./:/var/www
       - ./nginx:/etc/nginx/conf.d
     depends_on:
       - app
+    restart: unless-stopped
 
   mysql:
     image: mysql:8
@@ -27,12 +32,31 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: laravel
     ports:
-      - ":3306"
+      - "3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin","ping","-h","localhost"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+  
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025"
+    restart: unless-stopped
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     restart: always
     ports:
-      - ":80"
+      - "80"
     environment:
       PMA_HOST: mysql
       MYSQL_ROOT_PASSWORD: root
